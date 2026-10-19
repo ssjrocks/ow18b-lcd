@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import signal
 import sys
 
 import gi
@@ -117,6 +118,23 @@ class App(Adw.Application):
     def do_activate(self):
         window = self.props.active_window or Window(self, self.demo)
         window.present()
+
+    def do_startup(self):
+        Adw.Application.do_startup(self)
+        # Ctrl+C / kill: quit through do_shutdown so the meter is let go. Otherwise BlueZ keeps the
+        # connection and the meter stays invisible to other apps until it times out.
+        for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+            GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, sig, self._quit)
+
+    def _quit(self) -> bool:
+        self.quit()
+        return GLib.SOURCE_REMOVE
+
+    def do_shutdown(self):
+        for window in self.get_windows():
+            if isinstance(window, Window):
+                window.meter.stop()
+        Adw.Application.do_shutdown(self)
 
 
 def main() -> int:

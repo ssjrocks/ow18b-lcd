@@ -59,7 +59,7 @@ class Meter:
         self._thread.start()
 
     def stop(self) -> None:
-        if self._stop is not None:
+        if self._stop is not None and self._thread.is_alive():
             self._loop.call_soon_threadsafe(self._stop.set)
         self._thread.join(timeout=5)
 
