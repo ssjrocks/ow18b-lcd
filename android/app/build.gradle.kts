@@ -24,8 +24,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // ow18b.versionCode/versionName/updateApi only exist to test the updater.
-        versionCode = (findProperty("ow18b.versionCode") as String?)?.toInt() ?: 1
-        versionName = (findProperty("ow18b.versionName") as String?) ?: "1.0.0"
+        versionCode = (findProperty("ow18b.versionCode") as String?)?.toInt() ?: 2
+        versionName = (findProperty("ow18b.versionName") as String?) ?: "1.1.0"
         val updateApi = (findProperty("ow18b.updateApi") as String?)
             ?: "https://api.github.com/repos/ssjrocks/ow18b-lcd/releases/latest"
         buildConfigField("String", "UPDATE_API", "\"$updateApi\"")
@@ -57,7 +57,10 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
-        freeCompilerArgs += listOf("-opt-in=androidx.compose.material3.ExperimentalMaterial3Api")
+        freeCompilerArgs += listOf(
+            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
+            "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi",
+        )
     }
     buildFeatures {
         compose = true
@@ -75,4 +78,5 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    testImplementation("junit:junit:4.13.2")
 }

@@ -65,10 +65,8 @@ captures. ✓ = we already use it.
 
 ## Gap list for OW18B LCD
 
-Already done: live LCD, annunciators, 60 s trend, auto-reconnect, demo mode, Android updates and
-reports.
-
-Worth adding, roughly in order of value:
+All of these are in 1.1.0 (desktop and Android), tested on the meter on 2026-10-19. The list as
+planned, roughly in order of value:
 
 1. **Remote keys** on both apps: Select, Range, Hold, Hz/Duty/REL, each with a long press
    (auto range, backlight/flashlight). Needs a hardware check of the Hz key code (4 or 5).

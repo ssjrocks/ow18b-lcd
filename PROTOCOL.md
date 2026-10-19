@@ -14,20 +14,27 @@ earlier notes on OWON's B35T/OW18E family, which share the format.
 
 Other characteristics in the `fff0` service (from OWON's apps via
 [dmm-tools](https://github.com/antoinecellerier/dmm-tools/blob/main/docs/research/owon/reverse-engineered-protocol.md);
-not yet tried on our meter):
+all tested on an OW18B with firmware 3.0.4 on 2026-10-19, except `*STOP`):
 
 | Char | Use |
 |---|---|
 | `fff1` | 16-byte commands (below), and their replies when read back |
 | `fff2` | device info, read once: byte 0 model (18 = OW18B), byte 1 battery %, bytes 2-4 firmware, byte 5 `01` while an offline recording runs |
-| `fff3` | key presses, 2 bytes `[key, press]`: press `01` short, `00` long. Keys 1 Select, 2 Range, 3 Hold/light, 5 △/Hz/Duty (4 per one OW18B project) |
+| `fff3` | key presses, 2 bytes `[key, press]`: press `01` short, `00` long. 1 Select (DC ↔ AC), 2 Range (long: auto), 3 Hold (long: backlight and torch), 5 Hz/Duty △ (REL on DC, Hz on AC). Key 4 also toggles REL on the OW18B |
 | `fff4` | notifications: live packets, and offline-log dumps |
 
 Commands on `fff1`, each padded with zeros to 16 bytes: `*DATe` + century, year, month, day, hour,
 minute, second (binary) sets the clock; `*RECOrd,` + interval in seconds (u32 LE) + count (u32 LE,
 up to 10,000) starts an offline log, after which the meter disconnects; `*STOP` stops it;
-`*READlen?` asks for the log size; `*READ1?` dumps the log on `fff4` between two runs of 20 `FF`
-bytes (start time, interval, length, then range words and readings); `@` + name renames the meter.
+`*READlen?` asks for the log size (read `fff1`: u16 LE byte count); `*READ1?` dumps the log on `fff4`
+between two runs of 20 `FF` bytes: century, year, month, day, hour, minute, second, a zero byte,
+interval (u32 LE, s), payload length in bytes (u32 LE), then 16-bit words: a function/range word (bits
+10-15 = `111100`) before the readings it applies to, and readings in the live packet's sign-magnitude
+form. `@` + name renames the meter.
+
+The meter turns its Bluetooth off when an offline log starts; it has to be switched back on (hold
+Hz/Duty △/ᛒ) to read the log. Once, a dump arrived with its header but without its readings; the
+apps compare the payload with the announced length and read again.
 
 ## Packet
 

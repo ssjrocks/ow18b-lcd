@@ -32,6 +32,9 @@ object LcdStyle {
     val BG_TOP = Color(0.74f, 0.79f, 0.67f)
     val BG_BOTTOM = Color(0.64f, 0.70f, 0.57f)
     val INK = Color(0.11f, 0.15f, 0.10f)
+    // The glass turns red while an alarm is on
+    val ALARM_TOP = Color(0.86f, 0.66f, 0.60f)
+    val ALARM_BOTTOM = Color(0.78f, 0.52f, 0.46f)
     const val GHOST = 0.07f
 }
 
@@ -105,24 +108,26 @@ private fun DrawScope.label(m: TextMeasurer, x: Float, y: Float, s: String, size
 }
 
 @Composable
-fun Lcd(reading: Protocol.Reading?, connected: Boolean, modifier: Modifier = Modifier) {
+fun Lcd(reading: Protocol.Reading?, connected: Boolean, modifier: Modifier = Modifier, alarm: Boolean = false, recording: Boolean = false) {
     val measurer = rememberTextMeasurer()
     Canvas(modifier.aspectRatio(LcdStyle.W / LcdStyle.H)) {
         val s = min(size.width / LcdStyle.W, size.height / LcdStyle.H)
         translate((size.width - LcdStyle.W * s) / 2, (size.height - LcdStyle.H * s) / 2) {
-            scale(s, s, pivot = Offset.Zero) { drawLcd(measurer, if (connected) reading else null, connected) }
+            scale(s, s, pivot = Offset.Zero) { drawLcd(measurer, if (connected) reading else null, connected, alarm, recording) }
         }
     }
 }
 
-private fun DrawScope.drawLcd(m: TextMeasurer, r: Protocol.Reading?, connected: Boolean) {
+private fun DrawScope.drawLcd(m: TextMeasurer, r: Protocol.Reading?, connected: Boolean, alarm: Boolean, recording: Boolean) {
     val w = LcdStyle.W; val h = LcdStyle.H
-    drawRoundRect(Brush.verticalGradient(listOf(LcdStyle.BG_TOP, LcdStyle.BG_BOTTOM), 0f, h), Offset.Zero, Size(w, h), CornerRadius(14f))
+    val glass = if (alarm) listOf(LcdStyle.ALARM_TOP, LcdStyle.ALARM_BOTTOM) else listOf(LcdStyle.BG_TOP, LcdStyle.BG_BOTTOM)
+    drawRoundRect(Brush.verticalGradient(glass, 0f, h), Offset.Zero, Size(w, h), CornerRadius(14f))
     drawRoundRect(Color.Black.copy(alpha = 0.35f), Offset.Zero, Size(w, h), CornerRadius(14f), style = Stroke(3f))
 
     label(m, 22f, 36f, "AUTO", 17f, r?.auto == true)
     label(m, 88f, 36f, "HOLD", 17f, r?.hold == true)
     label(m, 154f, 36f, "REL", 17f, r?.rel == true)
+    label(m, 330f, 36f, "REC", 17f, recording)
     label(m, 400f, 36f, "BT", 17f, connected)
     // Battery
     val bat = r?.lowBattery == true

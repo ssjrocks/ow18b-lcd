@@ -78,6 +78,10 @@ def test_dump():
     assert log.start == dt.datetime(2026, 10, 19, 18, 3, 59) and log.interval == 1
     assert len(log.readings) == 10
     assert log.readings[9][0] == 9 and log.readings[0][1].digits == "0.0" and log.readings[0][1].unit == "mV"
+    assert log.complete and log.expected == 22
+    # The same dump without its readings (seen once on the real meter): flagged incomplete
+    short = b"".join(bytes.fromhex(n) for n in notes[:3] + notes[5:])
+    assert not protocol.parse_dump(short).complete
 
 
 def test_spoken():

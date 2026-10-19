@@ -2,4 +2,6 @@
 <paths>
     <!-- Downloaded updates, handed to Android's installer -->
     <cache-path name="updates" path="updates/" />
+    <!-- CSV files handed to the share sheet -->
+    <cache-path name="share" path="share/" />
 </paths>

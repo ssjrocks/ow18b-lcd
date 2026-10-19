@@ -215,23 +215,32 @@ class Meter:
             c = self._need()
             info = self.info or protocol.parse_info(bytes(await c.read_gatt_char(protocol.INFO)))
             dated = info.firmware_number >= 12
-            self._dump, self._dump_done = bytearray(), asyncio.Event()
-            try:
-                await self._write(protocol.COMMAND, protocol.READ_LOG if dated else protocol.READ_LOG_OLD)
-                last = -1
-                while True:
-                    try:
-                        await asyncio.wait_for(self._dump_done.wait(), 5)
-                        break
-                    except asyncio.TimeoutError:
-                        if len(self._dump) == last:
-                            raise TimeoutError("The meter stopped sending its log") from None
-                        last = len(self._dump)
-                        progress(last)
-                return protocol.parse_dump(bytes(self._dump), dated)
-            finally:
-                self._dump = None
+            for attempt in range(3):  # a dump once came without its readings; reading again is harmless
+                lg = await self._read_dump(dated, progress)
+                if lg.complete:
+                    return lg
+                log.info("offline log incomplete (%d of %d bytes), reading again", lg.received, lg.expected)
+                await asyncio.sleep(1)
+            raise ValueError(f"The log came incomplete ({lg.received} of {lg.expected} bytes); try again")
         return self._call(go)
+
+    async def _read_dump(self, dated: bool, progress: Callable[[int], None]) -> protocol.OfflineLog:
+        self._dump, self._dump_done = bytearray(), asyncio.Event()
+        try:
+            await self._write(protocol.COMMAND, protocol.READ_LOG if dated else protocol.READ_LOG_OLD)
+            last = -1
+            while True:
+                try:
+                    await asyncio.wait_for(self._dump_done.wait(), 5)
+                    break
+                except asyncio.TimeoutError:
+                    if len(self._dump) == last:
+                        raise TimeoutError("The meter stopped sending its log") from None
+                    last = len(self._dump)
+                    progress(last)
+            return protocol.parse_dump(bytes(self._dump), dated)
+        finally:
+            self._dump = None
 
     def _need(self) -> BleakClient:
         if self._client is None or not self._client.is_connected:

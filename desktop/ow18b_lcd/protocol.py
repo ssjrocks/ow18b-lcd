@@ -206,6 +206,12 @@ class OfflineLog:
     start: dt.datetime | None
     interval: int
     readings: list[tuple[float, Reading]] = field(default_factory=list)  # (seconds from start, reading)
+    expected: int = 0  # payload bytes the header announces
+    received: int = 0  # payload bytes that came
+
+    @property
+    def complete(self) -> bool:
+        return self.received >= self.expected
 
 
 def dump_complete(buf: bytes) -> bool:
@@ -226,6 +232,7 @@ def parse_dump(buf: bytes, dated: bool = True) -> OfflineLog:
         raise ValueError("the log was cut off")
     p = buf[start:end]
     when, interval, offset = None, 1, 4
+    expected = struct.unpack("<I", p[12:16] if dated else p[0:4])[0] if len(p) >= (16 if dated else 4) else 0
     if dated:
         cc, yy, mo, dd, hh, mi, ss = p[0:7]
         interval = struct.unpack("<I", p[8:12])[0] or 1
@@ -234,7 +241,7 @@ def parse_dump(buf: bytes, dated: bool = True) -> OfflineLog:
             when = dt.datetime(cc * 100 + yy if cc else 2000 + yy, mo, dd, hh, mi, ss)
         except ValueError:
             when = None  # the meter's clock was never set
-    log = OfflineLog(when, interval)
+    log = OfflineLog(when, interval, expected=expected, received=max(0, len(p) - offset))
     current: tuple[int, int, int] | None = None
     n = 0
     for k in range(offset, len(p) - 1, 2):
