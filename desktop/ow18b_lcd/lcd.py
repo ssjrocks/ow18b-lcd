@@ -14,6 +14,7 @@ from .protocol import Reading
 W, H = 500.0, 210.0
 BG_TOP, BG_BOTTOM = (0.74, 0.79, 0.67), (0.64, 0.70, 0.57)
 INK = (0.11, 0.15, 0.10)
+ALARM_TOP, ALARM_BOTTOM = (0.86, 0.66, 0.60), (0.78, 0.52, 0.46)  # the glass turns red while an alarm is on
 GHOST = 0.07  # alpha of unlit segments
 
 SEGMENTS = {
@@ -96,7 +97,8 @@ def _battery(ctx, x, y, lit):
     ctx.fill()
 
 
-def draw(ctx: cairo.Context, width: float, height: float, reading: Reading | None, connected: bool) -> None:
+def draw(ctx: cairo.Context, width: float, height: float, reading: Reading | None, connected: bool,
+         alarm: bool = False, recording: bool = False) -> None:
     scale = min(width / W, height / H)
     ctx.save()
     ctx.translate((width - W * scale) / 2, (height - H * scale) / 2)
@@ -111,8 +113,9 @@ def draw(ctx: cairo.Context, width: float, height: float, reading: Reading | Non
     ctx.arc(radius, radius, radius, math.pi, 3 * math.pi / 2)
     ctx.close_path()
     grad = cairo.LinearGradient(0, 0, 0, H)
-    grad.add_color_stop_rgb(0, *BG_TOP)
-    grad.add_color_stop_rgb(1, *BG_BOTTOM)
+    top, bottom = (ALARM_TOP, ALARM_BOTTOM) if alarm else (BG_TOP, BG_BOTTOM)
+    grad.add_color_stop_rgb(0, *top)
+    grad.add_color_stop_rgb(1, *bottom)
     ctx.set_source(grad)
     ctx.fill_preserve()
     ctx.set_source_rgba(0, 0, 0, 0.35)
@@ -125,6 +128,7 @@ def draw(ctx: cairo.Context, width: float, height: float, reading: Reading | Non
     _text(ctx, 22, 36, "AUTO", 17, bool(r and r.auto))
     _text(ctx, 88, 36, "HOLD", 17, bool(r and r.hold))
     _text(ctx, 154, 36, "REL", 17, bool(r and r.rel))
+    _text(ctx, 330, 36, "REC", 17, recording)
     _text(ctx, 400, 36, "BT", 17, connected)
     _battery(ctx, 440, 22, bool(r and r.low_battery))
 
