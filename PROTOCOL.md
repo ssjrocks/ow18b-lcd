@@ -12,6 +12,23 @@ earlier notes on OWON's B35T/OW18E family, which share the format.
   A notification can hold several packets back to back.
 - Only one client at a time: while one app is connected, others (OWON's own app included) can't see it.
 
+Other characteristics in the `fff0` service (from OWON's apps via
+[dmm-tools](https://github.com/antoinecellerier/dmm-tools/blob/main/docs/research/owon/reverse-engineered-protocol.md);
+not yet tried on our meter):
+
+| Char | Use |
+|---|---|
+| `fff1` | 16-byte commands (below), and their replies when read back |
+| `fff2` | device info, read once: byte 0 model (18 = OW18B), byte 1 battery %, bytes 2-4 firmware, byte 5 `01` while an offline recording runs |
+| `fff3` | key presses, 2 bytes `[key, press]`: press `01` short, `00` long. Keys 1 Select, 2 Range, 3 Hold/light, 5 △/Hz/Duty (4 per one OW18B project) |
+| `fff4` | notifications: live packets, and offline-log dumps |
+
+Commands on `fff1`, each padded with zeros to 16 bytes: `*DATe` + century, year, month, day, hour,
+minute, second (binary) sets the clock; `*RECOrd,` + interval in seconds (u32 LE) + count (u32 LE,
+up to 10,000) starts an offline log, after which the meter disconnects; `*STOP` stops it;
+`*READlen?` asks for the log size; `*READ1?` dumps the log on `fff4` between two runs of 20 `FF`
+bytes (start time, interval, length, then range words and readings); `@` + name renames the meter.
+
 ## Packet
 
 Three little-endian 16-bit words:
