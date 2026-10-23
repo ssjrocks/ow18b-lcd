@@ -69,7 +69,7 @@ recordings and alarms.
 install a newer version. Downloads are checked against the SHA-256 in the release, and Android only
 installs them over the app when they're signed with the same key.
 
-**Crash and problem reports** go to the author's server (ssjrocks.com) so bugs can be fixed. A report
+**Crash and problem reports** go to the author's server so bugs can be fixed. A report
 holds the app version, the device model and Android version, a random per-install id, memory figures,
 the app's own log lines and Android's log lines from this app's process, the stack trace for crashes,
 and the meter status (connected or not, model, firmware and battery, the last packet, how many readings

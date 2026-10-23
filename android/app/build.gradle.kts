@@ -20,6 +20,9 @@ android {
     compileSdk = 35
 
     defaultConfig {
+        // Crash-report URL, kept out of the repo: appReportsUrl in ~/.gradle/gradle.properties.
+        // Without it the app builds and runs but sends no reports.
+        manifestPlaceholders["appReportsUrl"] = (findProperty("appReportsUrl") as String?) ?: ""
         applicationId = "com.ssjrocks.ow18blcd"
         minSdk = 26
         targetSdk = 35
